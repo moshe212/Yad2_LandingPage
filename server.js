@@ -10,6 +10,12 @@ const app = express();
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, "dist")));
 
+// Fix for path-to-regexp error: explicitly handle routes that might have a colon
+// This comes before the wildcard route to avoid path-to-regexp issues
+app.get("/https://git.new/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+
 // For all requests that don't match a static file, send the index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
