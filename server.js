@@ -7,16 +7,21 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Middleware to catch problematic URLs before they reach the router
+app.use((req, res, next) => {
+  // If the URL contains something that would cause path-to-regexp to fail
+  // Just send the index.html directly
+  if (req.url.includes("https://git.new/")) {
+    return res.sendFile(path.join(__dirname, "dist", "index.html"));
+  }
+  next();
+});
+
 // Serve static files from the React app build directory
 app.use(express.static(path.join(__dirname, "dist")));
 
-// Fix for path-to-regexp error: explicitly handle routes that might have a colon
-// This comes before the wildcard route to avoid path-to-regexp issues
-app.get("/https://git.new/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-
 // For all requests that don't match a static file, send the index.html
+// Using a regular path without any special characters in the route definition
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
