@@ -34,25 +34,52 @@ export default function ContactForm({ isOpen, onClose }) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // כאן אפשר להוסיף שליחה לשרת
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // סימולציה של שליחה
+    try {
+      // מציאת כתובת נכונה לשרת - בפיתוח מקומי או בהרוקו
+      const baseUrl =
+        process.env.NODE_ENV === "production"
+          ? "" // בייצור זה יהיה באותו דומיין
+          : window.location.origin; // בפיתוח מקומי
 
-    setShowSuccess(true);
-    setIsSubmitting(false);
-
-    // איפוס הטופס אחרי 2 שניות
-    setTimeout(() => {
-      setShowSuccess(false);
-      setFormData({
-        firstName: "",
-        lastName: "",
-        businessName: "",
-        dataType: "",
-        phone: "",
-        email: "",
+      // שליחת הנתונים לשרת
+      const response = await fetch(`${baseUrl}/sendemail`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
-      onClose();
-    }, 2000);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error sending email:", errorData);
+        alert("אירעה שגיאה בשליחת הפנייה. אנא נסה שוב מאוחר יותר.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // הצגת הודעת הצלחה
+      setShowSuccess(true);
+
+      // איפוס הטופס אחרי 2 שניות
+      setTimeout(() => {
+        setShowSuccess(false);
+        setFormData({
+          firstName: "",
+          lastName: "",
+          businessName: "",
+          dataType: "",
+          phone: "",
+          email: "",
+        });
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error("Error sending form:", error);
+      alert("אירעה שגיאה בשליחת הפנייה. אנא נסה שוב מאוחר יותר.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e) => {
