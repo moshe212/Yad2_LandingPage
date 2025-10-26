@@ -20,10 +20,18 @@ app.use(express.urlencoded({ extended: true }));
 let transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "moshe212@gmail.com",
-    // יש להחליף את זה בסיסמת אפליקציה חדשה מחשבון Google שלך
-    pass: "rzpe satw prlh mrkq", // סיסמה לא תקפה - יש להחליף בסיסמת אפליקציה חדשה
+    user: process.env.EMAIL_USER || "moshe212@gmail.com",
+    pass: process.env.EMAIL_PASS || "rzpe satw prlh mrkq", // החלף בסיסמת אפליקציה תקפה
   },
+});
+
+// בדיקת התחברות לשרת המייל
+transporter.verify(function(error, success) {
+  if (error) {
+    console.log("שגיאה בחיבור לשרת המייל:", error);
+  } else {
+    console.log("שרת המייל מוכן לשליחה");
+  }
 });
 
 // Log all incoming requests for debugging - updated for more details
@@ -127,10 +135,20 @@ app.post("/sendemail", (req, res) => {
   transporter.sendMail(mailOptions, function (error, info) {
     if (error) {
       console.log("שגיאה בשליחת המייל:", error);
-      res.status(500).json({ status: "error", message: error.message });
+      console.log("Error details:", error.message);
+      console.log("Error code:", error.code);
+      return res.status(500).json({ 
+        status: "error", 
+        message: error.message,
+        code: error.code || "UNKNOWN_ERROR"
+      });
     } else {
       console.log("המייל נשלח בהצלחה:", info.response);
-      res.status(200).json({ status: "success" });
+      return res.status(200).json({ 
+        status: "success", 
+        message: "Email sent successfully",
+        info: info.response 
+      });
     }
   });
 });
